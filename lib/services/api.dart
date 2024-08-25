@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  final String apiUrl = 'http://10.0.2.2:5219/api/';
+  final String apiUrl = 'http://10.0.2.2:5000/api/';
 
   Future<List<Tip>> fetchTips() async {
     final response = await http.get(Uri.parse(apiUrl + 'tips'));
