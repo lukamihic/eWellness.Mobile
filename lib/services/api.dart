@@ -4,9 +4,11 @@ import 'package:eWellness/models/services.dart';
 import 'package:eWellness/models/tips.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart' as config show apiUri;
 
 class ApiService {
-  final String apiUrl = 'http://10.0.2.2:5000/api/';
+  static const apiUrl =
+      String.fromEnvironment('API_URI', defaultValue: config.apiUri);
 
   Future<List<Tip>> fetchTips() async {
     final response = await http.get(Uri.parse(apiUrl + 'tips'));

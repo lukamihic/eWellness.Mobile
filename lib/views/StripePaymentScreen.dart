@@ -3,6 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:eWellness/services/api.dart'; // Import your API service
+import '../config.dart' as config show stripeApiKey, stripeUri;
 
 class StripePaymentScreen extends StatefulWidget {
   final String serviceId;
@@ -22,6 +23,10 @@ class StripePaymentScreen extends StatefulWidget {
 class _StripePaymentScreenState extends State<StripePaymentScreen> {
   late Map<String, dynamic> paymentIntentData;
   final TextEditingController _amountController = TextEditingController();
+  static const stripeApiKey = String.fromEnvironment('STRIPE_API_KEY',
+      defaultValue: config.stripeApiKey);
+  static const stripeUri =
+      String.fromEnvironment('STRIPE_URI', defaultValue: config.stripeUri);
 
   @override
   void initState() {
@@ -87,7 +92,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntentData['client_secret'],
           style: ThemeMode.dark, // Customize as needed
-          merchantDisplayName: 'Your Merchant Name', // Replace with your name
+          merchantDisplayName: 'eWellness',
         ),
       );
 
@@ -116,10 +121,9 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       };
 
       final response = await http.post(
-        Uri.parse('https://api.stripe.com/v1/payment_intents'),
+        Uri.parse('${stripeUri}payment_intents'),
         headers: {
-          'Authorization':
-              'Bearer sk_test_51PSo8zRqhsbpjQAuLmM2KjCnwsyDs4gPzC2LCP109MfSQY10Mk62beynp0O2hlbU1om83VdvuQDVPzjNv1pbVetU00i3kNAuMZ',
+          'Authorization': 'Bearer $stripeApiKey',
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: body,

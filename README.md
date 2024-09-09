@@ -1,16 +1,12 @@
-# eWellness
+# ewellness_mobile
 
-A new Flutter project.
+eWellness Mobile
 
-## Getting Started
+## Credentials
+*Username*: mobile
+*Password*: test
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Configurables (using --dart-define)
+API_URI - api uri
+STRIPE_URI - stripe uri
+STRIPE_API_KEY - stripe api key
