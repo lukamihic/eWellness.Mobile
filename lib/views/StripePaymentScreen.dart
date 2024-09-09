@@ -174,11 +174,10 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       final userId =
           await getUserId(); // Fetch logged user id from SharedPreferences or similar
       final totalPrice = _amountController.text;
+
       final response = await ApiService().createAppointment({
         "clientId": userId,
-        "employeeId": 0,
         "serviceId": widget.serviceId,
-        "specialOfferId": null,
         "startTime": widget.startTime.toIso8601String(),
         "endTime": widget.endTime.toIso8601String(),
         "notes": "NONE",
@@ -187,7 +186,11 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       });
 
       final appointmentId = response['id'];
-      await createPaymentRecord(appointmentId);
+      try {
+        await createPaymentRecord(appointmentId);
+      } catch (e) {
+        print(e);
+      }
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Success!")));
       Navigator.pushNamed(context, '/');
