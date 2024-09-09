@@ -47,6 +47,7 @@ class LoginScreen extends StatelessWidget {
                 String email = emailController.text;
                 String password = passwordController.text;
                 ApiService().login(email, password).then((userId) {
+                  if (userId == -1) throw Exception("Invalid credentials!");
                   setId(userId);
                   Navigator.pushNamed(context, '/'); // Navigate to home screen
                   ScaffoldMessenger.of(context)
@@ -71,6 +72,7 @@ class LoginScreen extends StatelessWidget {
 }
 
 Future<void> setId(int id) async {
+  print(id);
   final prefs = await SharedPreferences.getInstance();
   prefs.setInt('userId', id);
 }

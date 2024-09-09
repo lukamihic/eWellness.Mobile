@@ -17,11 +17,13 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   List<Map<String, dynamic>> services = [];
+  List<Map<String, dynamic>> recommendedServices = [];
 
   @override
   void initState() {
     super.initState();
     _fetchServices();
+    _fetchRecommendedServices();
   }
 
   Future<void> _fetchServices() async {
@@ -29,6 +31,22 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
       final data = await ApiService().fetchServices(); // Call the API method
       setState(() {
         services = data
+            .map((item) =>
+                {'id': item.id, 'title': item.title, 'price': item.price})
+            .toList();
+      });
+    } catch (e) {
+      print('Failed to load services: $e');
+      // Handle error appropriately, e.g., show a Snackbar or Dialog
+    }
+  }
+
+  Future<void> _fetchRecommendedServices() async {
+    try {
+      final data =
+          await ApiService().fetchRecommendedServices(); // Call the API method
+      setState(() {
+        recommendedServices = data
             .map((item) =>
                 {'id': item.id, 'title': item.title, 'price': item.price})
             .toList();
@@ -144,6 +162,12 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
                 onPressed: _confirmReservation,
                 child: Text('Confirm Reservation'),
               ),
+            ),
+            SizedBox(height: 24.0),
+            Center(
+              child: Text(recommendedServices.length > 0
+                  ? "We recommend ${services.first['title']}"
+                  : "Make a first reservation to get recommendations from us!"),
             ),
           ],
         ),

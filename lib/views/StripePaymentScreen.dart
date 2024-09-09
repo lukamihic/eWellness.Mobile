@@ -91,7 +91,6 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntentData['client_secret'],
-          style: ThemeMode.dark, // Customize as needed
           merchantDisplayName: 'eWellness',
         ),
       );
@@ -111,15 +110,10 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
   Future<Map<String, dynamic>> createPaymentIntent(
       String amount, String currency) async {
     try {
-      final body = {
-        'amount': calculateAmount(amount),
-        'currency': currency,
-        'payment_method_types[]': 'card',
-        'automatic_payment_methods': {
-          'enabled': true
-        }, // <- This might cause the issue
-      };
+      final body = {'amount': calculateAmount(amount), 'currency': currency};
 
+      print(stripeUri);
+      print('Bearer $stripeApiKey');
       final response = await http.post(
         Uri.parse('${stripeUri}payment_intents'),
         headers: {

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:eWellness/config.dart';
 import 'package:flutter/material.dart';
 import 'package:eWellness/views/ServiceReservationScreen.dart';
 import 'package:eWellness/views/LoginScreen.dart';
@@ -7,11 +8,11 @@ import 'package:eWellness/views/RegistrationScreen.dart';
 import 'package:eWellness/views/StripePaymentScreen.dart'; // Import the Stripe payment screen
 import 'package:eWellness/views/TipsTricksScreen.dart';
 import 'package:eWellness/views/SpecialOffersScreen.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(MyApp());
 }
 
@@ -54,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final userId = prefs.getInt('userId');
     setState(() {
       isLoggedIn = userId != null;
     });
@@ -80,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(fontSize: 24),
             ),
             SizedBox(height: 20),
-            if (!isLoggedIn) ...[
+            if (isLoggedIn) ...[
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 76, 175, 142),
@@ -116,7 +117,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 child: Text('Service Reservation'),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // Logout functionality
+                  setState(() {
+                    isLoggedIn = false;
+                    SharedPreferences.getInstance().then((prefs) {
+                      prefs.remove('userId');
+                    });
+                  });
+                },
+                child: Text('Logout'),
+              ),
+            ],
+            if (!isLoggedIn) ...[
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 76, 175, 142),
@@ -139,20 +154,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.pushNamed(context, '/registration');
                 },
                 child: Text('New to our services? Register'),
-              ),
-            ],
-            if (isLoggedIn) ...[
-              ElevatedButton(
-                onPressed: () {
-                  // Logout functionality
-                  setState(() {
-                    isLoggedIn = false;
-                    SharedPreferences.getInstance().then((prefs) {
-                      prefs.remove('userId');
-                    });
-                  });
-                },
-                child: Text('Logout'),
               ),
             ],
           ],

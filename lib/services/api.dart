@@ -40,6 +40,18 @@ class ApiService {
     }
   }
 
+  Future<List<Services>> fetchRecommendedServices() async {
+    int id = await getUserId() ?? -1;
+    final response = await http
+        .get(Uri.parse(apiUrl + 'services/getRecommendations?userId=${id}'));
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((item) => Services.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load services');
+    }
+  }
+
   Future<int> login(String email, String password) async {
     final Uri fullApiUrl = Uri.parse(apiUrl + 'users/login');
 
