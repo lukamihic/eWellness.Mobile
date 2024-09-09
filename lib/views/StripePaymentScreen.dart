@@ -3,6 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:eWellness/services/api.dart'; // Import your API service
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart' as config show stripeApiKey, stripeUri;
 
 class StripePaymentScreen extends StatefulWidget {
@@ -90,9 +91,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       // Initialize Stripe payment sheet
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: paymentIntentData['client_secret'],
-          merchantDisplayName: 'eWellness',
-        ),
+            paymentIntentClientSecret: paymentIntentData['client_secret']),
       );
 
       // Display Stripe payment sheet
@@ -101,9 +100,11 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       print('Error making payment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed. Please try again.'),
+          content:
+              Text('Payment failed. Please try again. Please pay in studio.'),
         ),
       );
+      createAppointment();
     }
   }
 
@@ -163,10 +164,15 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
     }
   }
 
+  Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('userId');
+  }
+
   Future<void> createAppointment() async {
     try {
       final userId =
-          ''; // Fetch logged user id from SharedPreferences or similar
+          await getUserId(); // Fetch logged user id from SharedPreferences or similar
       final totalPrice = _amountController.text;
       final response = await ApiService().createAppointment({
         "clientId": userId,
@@ -184,6 +190,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       await createPaymentRecord(appointmentId);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Success!")));
+      Navigator.pushNamed(context, '/');
     } catch (e) {
       print('Error creating appointment: $e');
       ScaffoldMessenger.of(context).showSnackBar(

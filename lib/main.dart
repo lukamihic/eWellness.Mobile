@@ -13,6 +13,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    Stripe.publishableKey = stripePublishableKey;
+    Stripe.merchantIdentifier = 'eWellness';
+    await Stripe.instance.applySettings();
+  } catch (ex) {
+    print(ex);
+  }
+
   runApp(MyApp());
 }
 
@@ -57,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('userId');
     setState(() {
-      isLoggedIn = userId != null;
+      isLoggedIn = userId != null && userId != -1;
     });
   }
 
