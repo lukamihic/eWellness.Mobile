@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eWellness/models/appointments.dart';
 import 'package:eWellness/models/offers.dart';
 import 'package:eWellness/models/services.dart';
 import 'package:eWellness/models/tips.dart';
@@ -49,6 +50,26 @@ class ApiService {
       return data.map((item) => Services.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load services');
+    }
+  }
+
+  Future<List<Appointment>> fetchAppointments() async {
+    // Fetch all appointments from the API
+    final response = await http.get(Uri.parse(apiUrl + 'appointments'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      int userId = await getUserId() ?? -1; // Get the user ID
+
+      // Filter the list of appointments based on user ID
+      List<Appointment> appointments = data
+          .map((item) => Appointment.fromJson(item))
+          .where((appointment) => appointment.clientId == userId)
+          .toList();
+
+      return appointments; // Return the filtered list
+    } else {
+      throw Exception('Failed to load appointments');
     }
   }
 

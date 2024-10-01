@@ -1,8 +1,9 @@
-import 'package:eWellness/views/StripePaymentScreen.dart';
+import 'package:eWellness/models/appointments.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:eWellness/services/api.dart'; // Import your API service
-import './StripePaymentScreen.dart';
+import 'package:eWellness/views/StripePaymentScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ServiceReservationScreen extends StatefulWidget {
   @override
@@ -18,12 +19,15 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
   TimeOfDay? selectedTime;
   List<Map<String, dynamic>> services = [];
   List<Map<String, dynamic>> recommendedServices = [];
+  List<Appointment> reservations =
+      []; // Store reservations as List<Appointment>
 
   @override
   void initState() {
     super.initState();
     _fetchServices();
     _fetchRecommendedServices();
+    _fetchReservations(); // Fetch reservations on initialization
   }
 
   Future<void> _fetchServices() async {
@@ -31,8 +35,11 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
       final data = await ApiService().fetchServices(); // Call the API method
       setState(() {
         services = data
-            .map((item) =>
-                {'id': item.id, 'title': item.title, 'price': item.price})
+            .map((item) => {
+                  'id': item.id,
+                  'title': item.title,
+                  'price': item.price,
+                })
             .toList();
       });
     } catch (e) {
@@ -47,13 +54,27 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
           await ApiService().fetchRecommendedServices(); // Call the API method
       setState(() {
         recommendedServices = data
-            .map((item) =>
-                {'id': item.id, 'title': item.title, 'price': item.price})
+            .map((item) => {
+                  'id': item.id,
+                  'title': item.title,
+                  'price': item.price,
+                })
             .toList();
       });
     } catch (e) {
-      print('Failed to load services: $e');
+      print('Failed to load recommended services: $e');
       // Handle error appropriately, e.g., show a Snackbar or Dialog
+    }
+  }
+
+  Future<void> _fetchReservations() async {
+    try {
+      final data = await ApiService().fetchAppointments(); // Fetch reservations
+      setState(() {
+        reservations = data; // Already a List<Appointment>
+      });
+    } catch (e) {
+      print('Failed to load reservations: $e');
     }
   }
 
@@ -163,11 +184,53 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
                 child: Text('Confirm Reservation'),
               ),
             ),
-            SizedBox(height: 24.0),
+            SizedBox(height: 16.0),
             Center(
-              child: Text(recommendedServices.length > 0
-                  ? "We recommend ${services.first['title']}"
-                  : "Make a first reservation to get recommendations from us!"),
+              child: Text(
+                recommendedServices.isNotEmpty
+                    ? "We recommend ${recommendedServices.first['title']}"
+                    : "Make a first reservation to get recommendations from us!",
+              ),
+            ),
+            SizedBox(height: 24.0),
+            Text(
+              'Your Reservations:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.0),
+            Expanded(
+              child: reservations.isEmpty
+                  ? Center(child: Text('No reservations found.'))
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                      ),
+                      itemCount: reservations.length,
+                      itemBuilder: (context, index) {
+                        final reservation = reservations[index];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Reservation no: ${reservation.id}',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.0),
+                                Text('Start: ${reservation.startTime}'),
+                                Text('End: ${reservation.endTime}'),
+                                Text(
+                                    'Price: BAM ${reservation.price.toString()}'),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
