@@ -63,9 +63,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('userId');
+    final userId = prefs.getString('userId');
     setState(() {
-      isLoggedIn = userId != null && userId != -1;
+      isLoggedIn = userId != null && userId != '-1';
     });
   }
 

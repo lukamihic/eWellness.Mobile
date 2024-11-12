@@ -71,8 +71,7 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-Future<void> setId(int id) async {
-  print(id);
+Future<void> setId(String id) async {
   final prefs = await SharedPreferences.getInstance();
-  prefs.setInt('userId', id);
+  prefs.setString('userId', id);
 }

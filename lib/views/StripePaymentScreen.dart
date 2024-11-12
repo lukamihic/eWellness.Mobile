@@ -164,15 +164,24 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
     }
   }
 
-  Future<int?> getUserId() async {
+  Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('userId');
+    return prefs.getString('userId');
   }
 
   Future<void> createAppointment() async {
-    try {
-      final userId =
-          await getUserId(); // Fetch logged user id from SharedPreferences or similar
+      try {
+        final parts = (await getUserId() ?? '').split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid token');
+      }
+
+      final payload = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(payload));
+
+      final payloadMap = json.decode(decoded);
+      
+      final userId = int.parse(payloadMap['sub']);
       final totalPrice = _amountController.text;
 
       final response = await ApiService().createAppointment({
@@ -184,10 +193,11 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
         "status": "RESERVED",
         "totalPrice": totalPrice,
       });
-
-      final appointmentId = response['id'];
+      print(response);
+      final appointmentId = response;
+      print(appointmentId);
       try {
-        await createPaymentRecord(appointmentId);
+        await createPaymentRecord(appointmentId.toString());
       } catch (e) {
         print(e);
       }
@@ -202,6 +212,8 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
   }
 
   Future<void> createPaymentRecord(String appointmentId) async {
+    print(paymentIntentData[
+          'id']);
     try {
       final transactionId = paymentIntentData[
           'id']; // Assuming the transaction ID from Stripe payment
@@ -210,6 +222,14 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       final fees = '0'; // Assuming fees are zero
       final paymentMethodId = '1'; // Assuming payment method ID
 
+      print({
+        "amount": amount,
+        "date": date,
+        "transactionId": transactionId,
+        "fees": fees,
+        "paymentMethodId": paymentMethodId,
+        "appointmentId": appointmentId,
+      });
       await ApiService().createPayment({
         "amount": amount,
         "date": date,

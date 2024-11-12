@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:eWellness/models/appointments.dart';
 import 'package:eWellness/models/offers.dart';
 import 'package:eWellness/models/services.dart';
@@ -12,7 +13,7 @@ class ApiService {
       String.fromEnvironment('API_URI', defaultValue: config.apiUri);
 
   Future<List<Tip>> fetchTips() async {
-    final response = await http.get(Uri.parse(apiUrl + 'tips'));
+    final response = await http.get(Uri.parse(apiUrl + 'tips'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
       return data.map((item) => Tip.fromJson(item)).toList();
@@ -22,7 +23,7 @@ class ApiService {
   }
 
   Future<List<Offer>> fetchOffers() async {
-    final response = await http.get(Uri.parse(apiUrl + 'specialOffers'));
+    final response = await http.get(Uri.parse(apiUrl + 'specialOffers'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
       return data.map((item) => Offer.fromJson(item)).toList();
@@ -32,7 +33,7 @@ class ApiService {
   }
 
   Future<List<Services>> fetchServices() async {
-    final response = await http.get(Uri.parse(apiUrl + 'services'));
+    final response = await http.get(Uri.parse(apiUrl + 'services'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
       return data.map((item) => Services.fromJson(item)).toList();
@@ -42,9 +43,9 @@ class ApiService {
   }
 
   Future<List<Services>> fetchRecommendedServices() async {
-    int id = await getUserId() ?? -1;
+    String id = await getUserId() ?? '-1';
     final response = await http
-        .get(Uri.parse(apiUrl + 'services/getRecommendations?userId=${id}'));
+        .get(Uri.parse(apiUrl + 'services/getRecommendations?userId=${id}'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
       return data.map((item) => Services.fromJson(item)).toList();
@@ -55,11 +56,11 @@ class ApiService {
 
   Future<List<Appointment>> fetchAppointments() async {
     // Fetch all appointments from the API
-    final response = await http.get(Uri.parse(apiUrl + 'appointments'));
+    final response = await http.get(Uri.parse(apiUrl + 'appointments'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
 
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
-      int userId = await getUserId() ?? -1; // Get the user ID
+      String userId = await getUserId() ?? '-1'; // Get the user ID
 
       // Filter the list of appointments based on user ID
       List<Appointment> appointments = data
@@ -73,7 +74,7 @@ class ApiService {
     }
   }
 
-  Future<int> login(String email, String password) async {
+  Future<String> login(String email, String password) async {
     final Uri fullApiUrl = Uri.parse(apiUrl + 'users/login');
 
     final Map<String, String> body = {
@@ -84,13 +85,13 @@ class ApiService {
     final response = await http.post(
       fullApiUrl,
       headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json; charset=UTF-8'
       },
       body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {
-      int userId = int.parse(response.body);
+      String userId = response.body.toString();
       await saveUserId(userId); // Save user ID to shared preferences
       return userId;
     } else {
@@ -130,7 +131,7 @@ class ApiService {
     final response = await http.post(
       fullApiUrl,
       headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json; charset=UTF-8'
       },
       body: jsonEncode(body),
     );
@@ -146,7 +147,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createAppointment(
+  Future<int> createAppointment(
       Map<String, dynamic> data) async {
     final Uri fullApiUrl = Uri.parse(apiUrl + 'appointments');
 
@@ -155,12 +156,13 @@ class ApiService {
         fullApiUrl,
         headers: {
           'Content-Type': 'application/json',
-          // Add any additional headers as needed
+          HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '')
         },
         body: jsonEncode(data),
       );
 
       if (response.statusCode == 200) {
+        print(response.body);
         return jsonDecode(response.body);
       } else {
         throw Exception('Failed to create appointment');
@@ -173,18 +175,18 @@ class ApiService {
 
   Future<Map<String, dynamic>> createPayment(Map<String, dynamic> data) async {
     final Uri fullApiUrl = Uri.parse(
-        apiUrl + 'payments'); // Assuming this is your endpoint for payments
-
+        apiUrl + 'payments'); 
     try {
       final response = await http.post(
         fullApiUrl,
         headers: {
           'Content-Type': 'application/json',
-          // Add any additional headers as needed
+          HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '')
         },
         body: jsonEncode(data),
       );
-
+      print(response.statusCode);
+      print(response.body);
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -197,12 +199,12 @@ class ApiService {
   }
 }
 
-Future<void> saveUserId(int userId) async {
+Future<void> saveUserId(String userId) async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt('userId', userId);
+  await prefs.setString('userId', userId);
 }
 
-Future<int?> getUserId() async {
+Future<String?> getUserId() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('userId');
+  return prefs.getString('userId');
 }
