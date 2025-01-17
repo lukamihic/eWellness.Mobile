@@ -17,6 +17,7 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
   String? selectedServiceId;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  double? selectedPrice;
   List<Map<String, dynamic>> services = [];
   List<Map<String, dynamic>> recommendedServices = [];
   List<Appointment> reservations =
@@ -117,6 +118,7 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => StripePaymentScreen(
+            price: selectedPrice ?? 0.0,
             serviceId: selectedServiceId!,
             startTime: selectedDate!,
             endTime: DateTime(selectedDate!.year, selectedDate!.month,
@@ -150,12 +152,13 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
               items: services.map((service) {
                 return DropdownMenuItem<String>(
                   value: service['id'].toString(),
-                  child: Text('${service['title']} - BAM ${service['price']}'),
+                  child: Text('${service['title']} - EUR ${service['price']}'),
                 );
               }).toList(),
               onChanged: (value) {
                 setState(() {
                   selectedServiceId = value;
+                  selectedPrice = services.firstWhere((service) => service['id'] == int.parse(value.toString()))['price'];
                 });
               },
             ),
@@ -188,7 +191,7 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
             Center(
               child: Text(
                 recommendedServices.isNotEmpty
-                    ? "We recommend ${recommendedServices.first['title']}"
+                    ? "Our recommendation for you: ${recommendedServices.first['title']}"
                     : "Make a first reservation to get recommendations from us!",
               ),
             ),
@@ -217,14 +220,14 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('Reservation no: ${reservation.id}',
+                                Text('Reservation ID: ${reservation.id}',
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold)),
-                                SizedBox(height: 8.0),
+                                SizedBox(height: 4.0),
                                 Text('Start: ${reservation.startTime}'),
                                 Text('End: ${reservation.endTime}'),
                                 Text(
-                                    'Price: BAM ${reservation.price.toString()}'),
+                                    'Price: EUR ${reservation.price.toString()}'),
                               ],
                             ),
                           ),

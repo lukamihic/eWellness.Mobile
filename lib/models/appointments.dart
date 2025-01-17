@@ -17,7 +17,7 @@ class Appointment {
     return Appointment(
       startTime: json['startTime'],
       endTime: json['endTime'],
-      price: json['price'] ?? 0,
+      price: json['price'] ?? json['totalPrice'] ?? 0,
       clientId: json['clientId'],
       id: json['id'],
     );

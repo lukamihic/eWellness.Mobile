@@ -10,11 +10,13 @@ class StripePaymentScreen extends StatefulWidget {
   final String serviceId;
   final DateTime startTime;
   final DateTime endTime;
+  final double price;
 
   StripePaymentScreen({
     required this.serviceId,
     required this.startTime,
     required this.endTime,
+    required this.price,
   });
 
   @override
@@ -22,17 +24,22 @@ class StripePaymentScreen extends StatefulWidget {
 }
 
 class _StripePaymentScreenState extends State<StripePaymentScreen> {
-  late Map<String, dynamic> paymentIntentData;
+  Map<String, dynamic>? paymentIntentData; // Nullable to avoid initialization errors
   final TextEditingController _amountController = TextEditingController();
-  static const stripeApiKey = String.fromEnvironment('STRIPE_API_KEY',
-      defaultValue: config.stripeApiKey);
-  static const stripeUri =
-      String.fromEnvironment('STRIPE_URI', defaultValue: config.stripeUri);
+  static const stripeApiKey = String.fromEnvironment(
+    'STRIPE_API_KEY',
+    defaultValue: config.stripeApiKey,
+  );
+  static const stripeUri = String.fromEnvironment(
+    'STRIPE_URI',
+    defaultValue: config.stripeUri,
+  );
 
   @override
   void initState() {
     super.initState();
-    _amountController.text = '0'; // Initialize with default value
+    print(widget.price);
+    _amountController.text = widget.price.toString(); // Initialize with default value
   }
 
   @override
@@ -49,9 +56,10 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
             TextFormField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Enter Amount (EUR)',
+                labelText: 'Total Price (EUR)',
               ),
               keyboardType: TextInputType.number,
+              enabled: false,
               onChanged: (value) {
                 setState(() {});
               },
@@ -73,7 +81,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
     try {
       // Ensure amount is valid
       if (_amountController.text.isEmpty ||
-          int.parse(_amountController.text) <= 0) {
+          double.parse(_amountController.text) <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Please enter a valid amount.'),
@@ -89,13 +97,16 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       );
 
       // Initialize Stripe payment sheet
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-            paymentIntentClientSecret: paymentIntentData['client_secret']),
-      );
+      if (paymentIntentData != null) {
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: paymentIntentData!['client_secret'],
+          ),
+        );
 
-      // Display Stripe payment sheet
-      await displayPaymentSheet();
+        // Display Stripe payment sheet
+        await displayPaymentSheet();
+      }
     } catch (e, s) {
       print('Error making payment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +149,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
   }
 
   String calculateAmount(String amount) {
-    final price = int.parse(amount) * 100; // Convert to cents
+    final price = (double.parse(amount) * 100).round(); // Convert to cents
     return price.toString();
   }
 
@@ -146,7 +157,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
     try {
       await Stripe.instance.presentPaymentSheet();
       setState(() {
-        paymentIntentData = {}; // Clear payment intent data after payment
+        paymentIntentData = null; // Clear payment intent data after payment
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Payment successful")));
@@ -170,8 +181,8 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
   }
 
   Future<void> createAppointment() async {
-      try {
-        final parts = (await getUserId() ?? '').split('.');
+    try {
+      final parts = (await getUserId() ?? '').split('.');
       if (parts.length != 3) {
         throw Exception('Invalid token');
       }
@@ -180,7 +191,7 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
       final decoded = utf8.decode(base64Url.decode(payload));
 
       final payloadMap = json.decode(decoded);
-      
+
       final userId = int.parse(payloadMap['sub']);
       final totalPrice = _amountController.text;
 
@@ -212,40 +223,45 @@ class _StripePaymentScreenState extends State<StripePaymentScreen> {
   }
 
   Future<void> createPaymentRecord(String appointmentId) async {
-    print(paymentIntentData[
-          'id']);
-    try {
-      final transactionId = paymentIntentData[
-          'id']; // Assuming the transaction ID from Stripe payment
-      final amount = _amountController.text;
-      final date = DateTime.now().toIso8601String(); // Current date
-      final fees = '0'; // Assuming fees are zero
-      final paymentMethodId = '1'; // Assuming payment method ID
-
-      print({
-        "amount": amount,
-        "date": date,
-        "transactionId": transactionId,
-        "fees": fees,
-        "paymentMethodId": paymentMethodId,
-        "appointmentId": appointmentId,
-      });
-      await ApiService().createPayment({
-        "amount": amount,
-        "date": date,
-        "transactionId": transactionId,
-        "fees": fees,
-        "paymentMethodId": paymentMethodId,
-        "appointmentId": appointmentId,
-      });
-
-      Navigator.pushReplacementNamed(context, '/');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Success!")));
-    } catch (e) {
-      print('Error creating payment record:s $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to create payment record")));
+  try {
+    if (paymentIntentData == null || !paymentIntentData!.containsKey('id')) {
+      throw Exception("Payment intent data is invalid or missing transaction ID.");
     }
+
+    // Retrieve the transaction ID from paymentIntentData
+    final transactionId = paymentIntentData!['id'];
+    final amount = _amountController.text;
+    final date = DateTime.now().toIso8601String(); // Current date
+    final fees = '0'; // Assuming fees are zero
+    final paymentMethodId = '1'; // Assuming payment method ID
+
+    print({
+      "amount": amount,
+      "date": date,
+      "transactionId": transactionId,
+      "fees": fees,
+      "paymentMethodId": paymentMethodId,
+      "appointmentId": appointmentId,
+    });
+
+    await ApiService().createPayment({
+      "amount": amount,
+      "date": date,
+      "transactionId": transactionId, 
+      "fees": fees,
+      "paymentMethodId": paymentMethodId,
+      "appointmentId": appointmentId,
+    });
+
+    Navigator.pushReplacementNamed(context, '/');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment record created successfully!"))
+    );
+  } catch (e) {
+    print('Error creating payment record: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to create payment record."))
+    );
   }
+}
 }

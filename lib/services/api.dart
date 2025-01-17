@@ -43,7 +43,17 @@ class ApiService {
   }
 
   Future<List<Services>> fetchRecommendedServices() async {
-    String id = await getUserId() ?? '-1';
+    final parts = (await getUserId() ?? '').split('.');
+    if (parts.length != 3) {
+      throw Exception('Invalid token');
+    }
+
+    final payload = base64Url.normalize(parts[1]);
+    final decoded = utf8.decode(base64Url.decode(payload));
+
+    final payloadMap = json.decode(decoded);
+    
+    final id = int.parse(payloadMap['sub']);
     final response = await http
         .get(Uri.parse(apiUrl + 'services/getRecommendations?userId=${id}'), headers: {HttpHeaders.authorizationHeader: 'Bearer ' + (await getUserId() ?? '') });
     if (response.statusCode == 200) {
@@ -60,7 +70,17 @@ class ApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
-      String userId = await getUserId() ?? '-1'; // Get the user ID
+      final parts = (await getUserId() ?? '').split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid token');
+      }
+
+      final payload = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(payload));
+
+      final payloadMap = json.decode(decoded);
+      
+      final userId = int.parse(payloadMap['sub']);
 
       // Filter the list of appointments based on user ID
       List<Appointment> appointments = data
