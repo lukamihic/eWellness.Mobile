@@ -20,20 +20,19 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
   double? selectedPrice;
   List<Map<String, dynamic>> services = [];
   List<Map<String, dynamic>> recommendedServices = [];
-  List<Appointment> reservations =
-      []; // Store reservations as List<Appointment>
+  List<Appointment> reservations = [];
 
   @override
   void initState() {
     super.initState();
     _fetchServices();
     _fetchRecommendedServices();
-    _fetchReservations(); // Fetch reservations on initialization
+    _fetchReservations(); 
   }
 
   Future<void> _fetchServices() async {
     try {
-      final data = await ApiService().fetchServices(); // Call the API method
+      final data = await ApiService().fetchServices(); 
       setState(() {
         services = data
             .map((item) => {
@@ -45,14 +44,12 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
       });
     } catch (e) {
       print('Failed to load services: $e');
-      // Handle error appropriately, e.g., show a Snackbar or Dialog
     }
   }
 
   Future<void> _fetchRecommendedServices() async {
     try {
-      final data =
-          await ApiService().fetchRecommendedServices(); // Call the API method
+      final data = await ApiService().fetchRecommendedServices();
       setState(() {
         recommendedServices = data
             .map((item) => {
@@ -64,15 +61,15 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
       });
     } catch (e) {
       print('Failed to load recommended services: $e');
-      // Handle error appropriately, e.g., show a Snackbar or Dialog
     }
   }
 
   Future<void> _fetchReservations() async {
     try {
-      final data = await ApiService().fetchAppointments(); // Fetch reservations
+      final data = await ApiService().fetchAppointments(); 
       setState(() {
-        reservations = data; // Already a List<Appointment>
+        reservations = data; 
+        print(reservations[0]);
       });
     } catch (e) {
       print('Failed to load reservations: $e');
@@ -139,6 +136,7 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.teal,
         title: Text('Service Reservation'),
       ),
       body: Padding(
@@ -146,6 +144,17 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Image
+            Center(
+              child: Image.network(
+                'https://static.vecteezy.com/system/resources/previews/024/498/490/non_2x/clipboard-icon-illustration-clipboard-lineal-color-icon-vector.jpg',
+                width: 100,
+                height: 100,
+              ),
+            ),
+            SizedBox(height: 16.0),
+
+            // Service Selection Dropdown
             DropdownButtonFormField<String>(
               value: selectedServiceId,
               hint: Text('Select a Service'),
@@ -163,44 +172,85 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
               },
             ),
             SizedBox(height: 16.0),
+
+            // Date Picker
             TextField(
               controller: _dateController,
               decoration: InputDecoration(
                 labelText: 'Select Date',
+                labelStyle: TextStyle(color: Colors.teal),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.teal),
+                ),
               ),
               readOnly: true,
               onTap: () => _selectDate(context),
             ),
             SizedBox(height: 16.0),
+
+            // Time Picker
             TextField(
               controller: _timeController,
               decoration: InputDecoration(
                 labelText: 'Select Time',
+                labelStyle: TextStyle(color: Colors.teal),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.teal),
+                ),
               ),
               readOnly: true,
               onTap: () => _selectTime(context),
             ),
             SizedBox(height: 16.0),
-            Center(
-              child: ElevatedButton(
-                onPressed: _confirmReservation,
-                child: Text('Confirm Reservation'),
-              ),
-            ),
-            SizedBox(height: 16.0),
+
+            // Recommendation
             Center(
               child: Text(
                 recommendedServices.isNotEmpty
                     ? "Our recommendation for you: ${recommendedServices.first['title']}"
                     : "Make a first reservation to get recommendations from us!",
+                style: TextStyle(color: Colors.teal, fontSize: 16),
               ),
             ),
+            // SizedBox(height: 16.0),
+            // // Confirm and Pay Button
+            // Center(
+            //   child: ElevatedButton(
+            //     onPressed: _confirmReservation,
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: Colors.white,
+            //       foregroundColor: Colors.teal
+            //     ),
+            //     child: Text('Confirm Reservation'),
+            //   ),
+            // ),
+            SizedBox(height: 5.0),
+            // Confirm and Pay Button
+            Center(
+              child: ElevatedButton(
+                onPressed: _confirmReservation,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white
+                ),
+                child: Text('Confirm and Pay Now'),
+              ),
+            ),
+            
             SizedBox(height: 24.0),
+
+            // Your Reservations Header
             Text(
               'Your Reservations:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
             ),
             SizedBox(height: 16.0),
+
+            // Reservations Grid
             Expanded(
               child: reservations.isEmpty
                   ? Center(child: Text('No reservations found.'))
@@ -215,19 +265,25 @@ class _ServiceReservationScreenState extends State<ServiceReservationScreen> {
                       itemBuilder: (context, index) {
                         final reservation = reservations[index];
                         return Card(
+                          elevation: 5,
+                          color: Colors.teal[50],
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('Reservation ID: ${reservation.id}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                SizedBox(height: 4.0),
-                                Text('Start: ${reservation.startTime}'),
-                                Text('End: ${reservation.endTime}'),
                                 Text(
-                                    'Price: EUR ${reservation.price.toString()}'),
+                                  '${reservation.serviceName}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 4.0),
+                                Text('Start: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.parse(reservation.startTime))}'),
+                                Text('End: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.parse(reservation.endTime))}'),
+                                SizedBox(height: 4.0),
+                                Text(
+                                  'Price: EUR ${reservation.price.toString()}',
+                                  style: TextStyle(color: Colors.teal),
+                                ),
                               ],
                             ),
                           ),

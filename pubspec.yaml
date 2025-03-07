@@ -41,6 +41,8 @@ dependencies:
   shared_preferences: ^2.2.3
   http_interceptor: ^2.0.0
   flutter_secure_storage: ^8.0.0
+  flutter_credit_card: ^4.1.0
+  credit_card_type_detector: ^3.0.0
 
 
 dev_dependencies:

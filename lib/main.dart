@@ -13,15 +13,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    Stripe.publishableKey = stripePublishableKey;
-    Stripe.merchantIdentifier = 'eWellness';
-    await Stripe.instance.applySettings();
-  } catch (ex) {
-    print(ex);
-  }
 
-  runApp(MyApp());
+  try {
+    // Set up the publishable key and merchant identifier
+    // Stripe.publishableKey = stripePublishableKey;
+    // Stripe.merchantIdentifier = 'eWellness';
+
+    // // Apply settings for Stripe
+    // await Stripe.instance.applySettings();
+
+    // Run your app after Stripe is initialized
+    runApp(MyApp());
+  } catch (ex) {
+    print("Error initializing Stripe: $ex");
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -41,7 +46,6 @@ class MyApp extends StatelessWidget {
         '/reservation': (context) => ServiceReservationScreen(),
         '/login': (context) => LoginScreen(),
         '/registration': (context) => RegistrationScreen(),
-        // '/payment': (context) => StripePaymentScreen()
       },
     );
   }
